@@ -125,6 +125,17 @@ jobs:
           go-version: "1.23"
           cache: true
 
+      - name: Embed Windows icon + version info
+        if: matrix.goos == 'windows'
+        env:
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          go install github.com/akavel/rsrc@v0.10.2
+          "$(go env GOPATH)/bin/rsrc" \
+            -arch "${GOARCH}" \
+            -ico resources/icons/cmtrace.ico \
+            -o "rsrc_windows_${GOARCH}.syso"
+
       - name: Build standalone binary
         env:
           GOOS: ${{ matrix.goos }}

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!--
+    CMTrace Web — maskable app icon
+    Safe zone: central 80% = 51.2px inset on each side (glyph stays within 102..410)
+    Background fill covers full 512x512 for maskable cropping.
+    Design: dark-slate full bleed bg, rounded blue card, white log lines, green status dot.
+  -->
+
+  <!-- Full-bleed background for maskable safe area -->
+  <rect width="512" height="512" fill="#0f1117"/>
+
+  <!-- Blue rounded card — centred, within the 80% safe zone -->
+  <rect x="96" y="96" width="320" height="320" rx="56" ry="56" fill="#2563eb"/>
+
+  <!-- Subtle inner shadow / depth layer -->
+  <rect x="96" y="96" width="320" height="320" rx="56" ry="56"
+        fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="4"/>
+
+  <!-- Log text lines (white, rounded caps) -->
+  <!-- Line 1 — short label -->
+  <line x1="158" y1="192" x2="282" y2="192"
+        stroke="white" stroke-width="22" stroke-linecap="round" opacity="0.95"/>
+
+  <!-- Line 2 — long line -->
+  <line x1="158" y1="244" x2="338" y2="244"
+        stroke="white" stroke-width="22" stroke-linecap="round" opacity="0.95"/>
+
+  <!-- Line 3 — medium line -->
+  <line x1="158" y1="296" x2="304" y2="296"
+        stroke="white" stroke-width="22" stroke-linecap="round" opacity="0.95"/>
+
+  <!-- Line 4 — shorter line -->
+  <line x1="158" y1="348" x2="254" y2="348"
+        stroke="white" stroke-width="22" stroke-linecap="round" opacity="0.70"/>
+
+  <!-- Green status dot — lower-right of the card, bold accent -->
+  <circle cx="356" cy="340" r="36" fill="#0f1117"/>
+  <circle cx="356" cy="340" r="28" fill="#34d399"/>
+</svg>
