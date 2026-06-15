@@ -9,3 +9,12 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Local build artifacts
+.test-bin/
+dist/
+cmtrace
+cmtrace.exe
+
+# Scratch files used by the workflow agent for multi-line commit / PR text
+.git-*.tmp
