@@ -9,3 +9,9 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Local build artifacts
+.test-bin/
+dist/
+cmtrace
+cmtrace.exe
