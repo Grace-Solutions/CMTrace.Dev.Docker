@@ -133,13 +133,19 @@ jobs:
       - name: Embed Windows icon + version info
         if: matrix.goos == 'windows'
         env:
-          GOARCH: ${{ matrix.goarch }}
+          TARGET_GOARCH: ${{ matrix.goarch }}
         run: |
-          go install github.com/akavel/rsrc@v0.10.2
+          # rsrc is a host-side helper that emits a .syso the Go linker
+          # consumes during the subsequent cross-build. It must therefore
+          # be installed for the *runner* (linux/amd64), not the Windows
+          # target arch, otherwise `go install` produces an unrunnable
+          # binary under $GOPATH/bin/<goos>_<goarch>/. Force GOOS/GOARCH
+          # to the host for the install only.
+          GOOS=linux GOARCH=amd64 go install github.com/akavel/rsrc@v0.10.2
           "$(go env GOPATH)/bin/rsrc" \
-            -arch "${GOARCH}" \
+            -arch "${TARGET_GOARCH}" \
             -ico resources/icons/cmtrace.ico \
-            -o "rsrc_windows_${GOARCH}.syso"
+            -o "rsrc_windows_${TARGET_GOARCH}.syso"
 
       - name: Build standalone binary
         env:
