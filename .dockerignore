@@ -1,0 +1,14 @@
+.git
+.github
+.gitignore
+.gitattributes
+.editorconfig
+.vscode
+.idea
+docs/
+*.md
+LICENSE
+docker-compose*.yml
+.env
+.env.*
+!.env.example

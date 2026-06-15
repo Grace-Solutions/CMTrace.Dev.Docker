@@ -1,0 +1,162 @@
+/* ============================================================================
+ * CMTrace.dev — css/themes.css   (msnugget brand)
+ * Theming layer: CSS custom properties.
+ *   :root                  -> msnugget DARK palette  (the DEFAULT brand theme)
+ *   [data-theme="dark"]    -> identical DARK palette  (explicit dark)
+ *   [data-theme="light"]   -> clean LIGHT palette keeping the green accent
+ * app.js resolves the "auto" setting to either "light" or "dark" via matchMedia.
+ *
+ * Brand look: pure-black background, signature green accent (#39A751),
+ * ultra-bold white headings, light-grey body text, rounded green pill buttons.
+ *
+ * Severity model:
+ *   error   -> soft red row tint    (--err / --row-err-bg)
+ *   warning -> soft amber tint       (--warn / --row-warn-bg)
+ *   info    -> neutral               (--info / --row-info-bg)
+ *
+ * IMPORTANT performance note: the smooth theme-switch transition is applied to
+ * body and elevated panels ONLY — never to .row — so the virtual grid stays
+ * fast even when toggling themes while 1M rows are in the view.
+ * ==========================================================================*/
+
+/* ---------------------------------------------------------------------------
+ * DARK THEME — the DEFAULT msnugget brand theme.
+ * Pure black surfaces, faint green-tinted elevation, green accent.
+ * ------------------------------------------------------------------------- */
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --bg:            #000000;             /* pure black app background            */
+  --bg-elev:       #0c120b;             /* elevated panels (faint green tint)   */
+  --bg-grid:       #050705;             /* grid scroll area background          */
+
+  /* Text */
+  --fg:            #d2d7dc;             /* primary light-grey body text         */
+  --fg-dim:        #9aa1a8;             /* secondary text / metadata columns    */
+  --fg-faint:      rgba(255,255,255,0.42); /* faint hints / placeholders        */
+
+  /* Borders */
+  --border:        rgba(255,255,255,0.10); /* subtle separators                */
+  --border-strong: rgba(255,255,255,0.18); /* stronger dividers / resizers     */
+
+  /* Accent (signature green) */
+  --accent:        #39a751;            /* msnugget green                        */
+  --accent-fg:     #ffffff;            /* text/icon on accent fill              */
+  --accent-soft:   rgba(57,167,81,0.16); /* soft accent wash                    */
+  --accent-border: rgba(57,167,81,0.55); /* accent outline                      */
+
+  /* Severity hues */
+  --err:           #ff6b6b;
+  --warn:          #e3a84b;
+  --ok:            #39a751;
+  --info:          #7aa2c4;
+
+  /* Row tints (low-alpha washes that don't drown the monospace text) */
+  --row-err-bg:    rgba(255,90,90,0.13);
+  --row-warn-bg:   rgba(227,168,75,0.12);
+  --row-info-bg:   rgba(255,255,255,0.02);
+  --row-sel-bg:    rgba(57,167,81,0.18);
+  --row-hover-bg:  rgba(255,255,255,0.05);
+
+  /* Generic chrome hover/active */
+  --hover-bg:      rgba(255,255,255,0.06);
+  --active-bg:     rgba(255,255,255,0.10);
+
+  /* Search/term highlight */
+  --hl:            rgba(57,167,81,0.32);
+
+  /* Highlight rule row text — dark so bright palette colors stay readable */
+  --hl-fg:         #111111;
+  --hl-fg-dim:     #333333;
+
+  /* Effects */
+  --shadow:        0 14px 40px rgba(0,0,0,0.6),
+                   0 2px 8px rgba(0,0,0,0.45);
+  --scroll-thumb:  rgba(255,255,255,0.16);
+}
+
+/* ---------------------------------------------------------------------------
+ * LIGHT THEME — clean light variant that keeps the green accent.
+ * ------------------------------------------------------------------------- */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* Surfaces */
+  --bg:            #ffffff;
+  --bg-elev:       #f5f7f5;
+  --bg-grid:       #ffffff;
+
+  /* Text */
+  --fg:            #1d2421;
+  --fg-dim:        #5b665f;
+  --fg-faint:      #8a948c;
+
+  /* Borders */
+  --border:        #e2e8e3;
+  --border-strong: #cdd6cf;
+
+  /* Accent (slightly deeper green for light-bg contrast) */
+  --accent:        #1f8f3d;
+  --accent-fg:     #ffffff;
+  --accent-soft:   rgba(31,143,61,0.12);
+  --accent-border: rgba(31,143,61,0.45);
+
+  /* Severity hues */
+  --err:           #d64545;
+  --warn:          #b9791f;
+  --ok:            #1f8f3d;
+  --info:          #3b6ea5;
+
+  /* Row tints */
+  --row-err-bg:    rgba(214,69,69,0.10);
+  --row-warn-bg:   rgba(185,121,31,0.12);
+  --row-info-bg:   transparent;
+  --row-sel-bg:    rgba(31,143,61,0.14);
+  --row-hover-bg:  rgba(0,0,0,0.04);
+
+  /* Generic chrome hover/active */
+  --hover-bg:      rgba(0,0,0,0.05);
+  --active-bg:     rgba(0,0,0,0.08);
+
+  /* Search/term highlight */
+  --hl:            rgba(31,143,61,0.22);
+
+  /* Effects */
+  --shadow:        0 10px 30px rgba(16,24,40,0.16),
+                   0 2px 6px rgba(16,24,40,0.08);
+  --scroll-thumb:  rgba(0,0,0,0.18);
+}
+
+/* ---------------------------------------------------------------------------
+ * Smooth theme-switch transition.
+ * Applied to body and elevated surfaces ONLY (never .row) so the virtual grid
+ * remains fast. Respects users who prefer reduced motion.
+ * ------------------------------------------------------------------------- */
+body,
+#toolbar,
+#tabs,
+#statusbar,
+#findbar,
+.modal,
+.modal-backdrop,
+#palette,
+#empty-state {
+  transition: background-color 0.18s ease, color 0.18s ease,
+              border-color 0.18s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body,
+  #toolbar,
+  #tabs,
+  #statusbar,
+  #findbar,
+  .modal,
+  .modal-backdrop,
+  #palette,
+  #empty-state {
+    transition: none;
+  }
+}

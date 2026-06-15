@@ -1,0 +1,73 @@
+#=============================================================================
+# CMTRACE - Browser-based CMTrace log viewer for ConfigMgr, SCCM and Intune
+# https://cmtrace.dev/
+#=============================================================================
+#
+# CREDENTIALS:
+#   None — fully client-side static site, no auth, no backend
+#
+# PRODUCTION SETUP:
+#   1. Copy .env.example to .env and adjust CMTRACE_PORT / BIND_EXTERNAL_ADDRESS
+#   2. (Optional) Pin CMTRACE_VERSION to a published tag (sha-…, v1.2.3)
+#   3. docker compose up -d
+#   4. Place behind your edge proxy (NPM/Traefik/Caddy) for TLS + hostname
+#
+# ENDPOINTS:
+#   - Web UI: http://<host>:${CMTRACE_PORT:-19847}/
+#
+#=============================================================================
+
+name: '${STACK_NAME:-stk-cmtrace-00001}'
+
+networks:
+  EXTERNAL:
+    name: CMTRACE-EXTERNAL
+    driver: bridge
+    internal: false
+    attachable: true
+
+volumes:
+  nginx-config:
+    name: CMTRACE-APP-00001-nginx-config
+
+services:
+  App:
+    image: '${CMTRACE_IMAGE:-ghcr.io/grace-solutions/cmtrace.dev.docker}:${CMTRACE_VERSION:-latest}'
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: CMTRACE-APP-00001
+    restart: unless-stopped
+    stop_signal: SIGTERM
+    stop_grace_period: 30s
+    user: '${PUID:-1000}:${PGID:-1000}'
+    logging:
+      driver: 'local'
+    networks:
+      EXTERNAL:
+    ports:
+      - '${BIND_EXTERNAL_ADDRESS:-0.0.0.0}:${CMTRACE_PORT:-19847}:19847'
+    environment:
+      CMTRACE_TRUSTED_PROXIES: >-
+        ${CMTRACE_TRUSTED_PROXIES:-10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 100.64.0.0/10 127.0.0.0/8 169.254.0.0/16 ::1/128 fc00::/7 fe80::/10}
+    read_only: true
+    tmpfs:
+      - /tmp:size=16M
+      - /var/cache/nginx:size=16M
+      - /var/run:size=4M
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - 'nginx-config:/etc/nginx:rw'
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:19847/"]
+      start_period: 5s
+      interval: 30s
+      retries: 3
+      timeout: 5s
+    labels:
+      com.centurylinklabs.watchtower.enable: '${CMTRACE_ENABLEAUTOMATICUPDATES:-false}'

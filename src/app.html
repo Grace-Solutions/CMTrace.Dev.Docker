@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="description" content="CMTrace.dev — a fast, 100% client-side log viewer for ConfigMgr / Intune / SCCM and plain logs. Small Nuggets. Big Impact." />
+  <title>CMTrace Web | CMTrace log viewer in your browser</title>
+  <!-- Paint black immediately so there is no light flash before CSS applies. -->
+  <style>html,body{background:#000000;}</style>
+  <link rel="icon" href="favicon.svg" />
+  <link rel="preload" as="font" type="font/woff2" href="assets/fonts/manrope.woff2" crossorigin />
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/themes.css" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#39A751" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- ============================ TOOLBAR ============================ -->
+    <header id="toolbar" role="toolbar" aria-label="Main toolbar">
+      <!-- Brand wordmark — links back to the landing page. -->
+      <a class="brand-home" href="index.html" title="CMTrace.dev — back to home" aria-label="CMTrace.dev home">
+        <svg class="brand-glyph" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <rect width="24" height="24" rx="6" fill="#39a751"/>
+          <g fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round">
+            <path d="M6 8h7"/>
+            <path d="M6 12h9"/>
+            <path d="M6 16h5"/>
+          </g>
+          <circle cx="17.5" cy="15.5" r="1.7" fill="#d6f5de"/>
+        </svg>
+        <span class="brand-wordmark"><span class="brand-name">CMTrace</span><span class="brand-tld">.dev</span></span>
+      </a>
+
+      <span class="tb-sep" aria-hidden="true"></span>
+
+      <!-- File group -->
+      <div class="tb-group" role="group" aria-label="File">
+        <button type="button" id="btn-open" class="tb-btn" title="Open log files (Ctrl+O)" aria-label="Open log files">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+          </svg>
+          <span class="tb-label">Open</span>
+        </button>
+        <button type="button" id="btn-clipboard" class="tb-btn" title="Paste log from clipboard" aria-label="Paste log from clipboard">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <rect x="6" y="4" width="12" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M9 4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1H9V4z" fill="currentColor"/>
+            <line x1="9" y1="10" x2="15" y2="10" stroke="currentColor" stroke-width="1.5"/>
+            <line x1="9" y1="14" x2="15" y2="14" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+        </button>
+        <button type="button" id="btn-merge" class="tb-btn" title="Merge additional log files" aria-label="Merge additional log files">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M7 4v6a4 4 0 0 0 4 4h6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            <path d="M17 4v6a4 4 0 0 1-4 4H7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/>
+            <path d="M14 17l3-3-3-3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button type="button" id="btn-compare" class="tb-btn" title="Compare two logs (diff)" aria-label="Compare two logs">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <rect x="3" y="4" width="7" height="16" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+            <rect x="14" y="4" width="7" height="16" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+            <line x1="5" y1="8" x2="8" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="16" y1="8" x2="19" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="5" y1="12" x2="8" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+            <line x1="16" y1="16" x2="19" y2="16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+          </svg>
+        </button>
+        <button type="button" id="btn-reload" class="tb-btn" title="Reload files" aria-label="Reload files">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M20 11a8 8 0 1 0-2.3 5.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            <path d="M20 5v6h-6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button type="button" id="btn-tail" class="tb-btn" title="Toggle live tail / follow (Ctrl+End)" aria-label="Toggle live tail" aria-pressed="false">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M5 7h14M5 12h14M5 17h9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            <path d="M16 16l3 2-3 2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <span class="tb-sep" aria-hidden="true"></span>
+
+      <!-- Search / view group -->
+      <div class="tb-group" role="group" aria-label="Search and view">
+        <button type="button" id="btn-find" class="tb-btn" title="Find (Ctrl+F)" aria-label="Find">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <circle cx="11" cy="11" r="6" fill="none" stroke="currentColor" stroke-width="1.7"/>
+            <line x1="16" y1="16" x2="21" y2="21" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button type="button" id="btn-filter" class="tb-btn" title="Filter (Ctrl+R)" aria-label="Filter">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M4 5h16l-6 8v5l-4 2v-7L4 5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button type="button" id="btn-highlight" class="tb-btn" title="Highlight rules (Ctrl+H)" aria-label="Highlight rules">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M4 20h16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            <path d="M14.5 4.5l5 5L10 19l-5 1 1-5 8.5-10.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button type="button" id="btn-errorlookup" class="tb-btn" title="Error code lookup (Ctrl+E)" aria-label="Error code lookup">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M9.5 9.5a2.5 2.5 0 1 1 3.4 2.3c-.6.3-.9.7-.9 1.4v.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            <circle cx="12" cy="17" r="1.1" fill="currentColor"/>
+          </svg>
+        </button>
+        <button type="button" id="btn-goto" class="tb-btn" title="Go to line (Ctrl+G)" aria-label="Go to line">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 3v14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            <path d="M7 12l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 21h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button type="button" id="btn-stats" class="tb-btn" title="Statistics" aria-label="Statistics">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <line x1="6" y1="20" x2="6" y2="11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            <line x1="12" y1="20" x2="12" y2="5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            <line x1="18" y1="20" x2="18" y2="14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button type="button" id="btn-detail" class="tb-btn" title="Toggle detail pane (Ctrl+D)" aria-label="Toggle detail pane" aria-pressed="false">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <rect x="4" y="4" width="16" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/>
+            <line x1="4" y1="14" x2="20" y2="14" stroke="currentColor" stroke-width="1.7"/>
+            <line x1="7" y1="17.5" x2="14" y2="17.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button type="button" id="btn-insights" class="tb-btn" title="Toggle insights panel" aria-label="Toggle insights panel" aria-pressed="false">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M9 18h6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            <path d="M10 21h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            <path d="M12 3a6 6 0 0 0-3.5 10.9c.6.4.9 1 .9 1.7v.4h5.2v-.4c0-.7.3-1.3.9-1.7A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <span class="tb-sep" aria-hidden="true"></span>
+
+      <!-- Output group -->
+      <div class="tb-group" role="group" aria-label="Output">
+        <button type="button" id="btn-export" class="tb-btn" title="Export current view" aria-label="Export current view">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 3v12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            <path d="M7 8l5-5 5 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button type="button" id="btn-clear" class="tb-btn" title="Clear all (Ctrl+L)" aria-label="Clear all loaded data">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M5 7h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M7 7l1 12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2l1-12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <span class="tb-spacer" aria-hidden="true"></span>
+
+      <!-- App group (right aligned) -->
+      <div class="tb-group" role="group" aria-label="Application">
+        <button type="button" id="btn-palette" class="tb-btn" title="Command palette (Ctrl+K)" aria-label="Command palette">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M7 10l2.5 2L7 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="12.5" y1="14" x2="16.5" y2="14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button type="button" id="btn-theme" class="tb-btn" title="Toggle theme" aria-label="Toggle theme">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M20 13.5A8 8 0 0 1 10.5 4 8 8 0 1 0 20 13.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button type="button" id="btn-settings" class="tb-btn" title="Settings" aria-label="Settings">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M12 2.5l1.3 2.2 2.5-.5.4 2.5 2.2 1.3-1.1 2.3 1.1 2.3-2.2 1.3-.4 2.5-2.5-.5L12 21.5l-1.3-2.2-2.5.5-.4-2.5-2.2-1.3 1.1-2.3-1.1-2.3 2.2-1.3.4-2.5 2.5.5L12 2.5z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button type="button" id="btn-about" class="tb-btn" title="About CMTrace Web" aria-label="About CMTrace Web">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/>
+            <circle cx="12" cy="8" r="1.2" fill="currentColor"/>
+            <path d="M12 11v6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Hidden native file input used by Open / Merge -->
+      <input type="file" id="file-input" multiple accept=".log,.lo_,.txt,text/plain" hidden aria-hidden="true" />
+    </header>
+
+    <!-- ============================ QUICK FILTER BAR ============================ -->
+    <div id="quickbar" aria-label="Quick filters">
+      <div class="quick-toggles" role="group" aria-label="Severity quick filters">
+        <button type="button" id="flt-info" class="flt-toggle is-on" data-type="1" title="Toggle Info messages" aria-label="Toggle Info messages" aria-pressed="true">
+          <span class="dot dot-info" aria-hidden="true"></span>
+          <span class="flt-name">Info</span>
+          <span class="flt-count" id="cnt-info">0</span>
+        </button>
+        <button type="button" id="flt-warn" class="flt-toggle is-on" data-type="2" title="Toggle Warning messages" aria-label="Toggle Warning messages" aria-pressed="true">
+          <span class="dot dot-warn" aria-hidden="true"></span>
+          <span class="flt-name">Warning</span>
+          <span class="flt-count" id="cnt-warn">0</span>
+        </button>
+        <button type="button" id="flt-error" class="flt-toggle is-on" data-type="3" title="Toggle Error messages" aria-label="Toggle Error messages" aria-pressed="true">
+          <span class="dot dot-error" aria-hidden="true"></span>
+          <span class="flt-name">Error</span>
+          <span class="flt-count" id="cnt-error">0</span>
+        </button>
+      </div>
+      <div class="quick-search">
+        <svg class="qs-icon icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="11" cy="11" r="6" fill="none" stroke="currentColor" stroke-width="1.7"/>
+          <line x1="16" y1="16" x2="21" y2="21" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        </svg>
+        <input type="search" id="quick-search" placeholder="Quick filter… (text contained in any row)" aria-label="Quick filter text" autocomplete="off" spellcheck="false" />
+      </div>
+    </div>
+
+    <!-- ============================ TABS ============================ -->
+    <nav id="tabs" aria-label="Open files"></nav>
+
+    <!-- ============================ MAIN ============================ -->
+    <main id="main">
+      <!-- Smart insights panel: docked at the top of #main, hidden by default.
+           insights.js fills #insights-content (counts, top errors, timeline). -->
+      <section id="insights" aria-label="Log insights" hidden>
+        <header id="insights-head">
+          <span id="insights-title" class="insights-title">Insights</span>
+          <span class="insights-spacer" aria-hidden="true"></span>
+          <button type="button" id="insights-close" class="insights-close" title="Close insights panel" aria-label="Close insights panel">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+        </header>
+        <div id="insights-content"></div>
+      </section>
+
+      <!-- Virtual-scrolling grid; #grid is the scroll container -->
+      <div id="grid" tabindex="0" role="grid" aria-label="Log entries" aria-rowcount="0">
+        <div id="grid-header" role="row">
+          <div class="col col-icon" data-col="icon" role="columnheader" title="Severity">
+            <span class="col-label" aria-label="Severity"></span>
+            <span class="col-resizer" data-col="icon" aria-hidden="true"></span>
+          </div>
+          <div class="col col-text" data-col="text" role="columnheader">
+            <span class="col-label">Log Text</span>
+            <span class="col-resizer" data-col="text" aria-hidden="true"></span>
+          </div>
+          <div class="col col-component" data-col="component" role="columnheader">
+            <span class="col-label">Component</span>
+            <span class="col-resizer" data-col="component" aria-hidden="true"></span>
+          </div>
+          <div class="col col-time" data-col="time" role="columnheader">
+            <span class="col-label">Date / Time</span>
+            <span class="col-resizer" data-col="time" aria-hidden="true"></span>
+          </div>
+          <div class="col col-thread" data-col="thread" role="columnheader">
+            <span class="col-label">Thread</span>
+            <span class="col-resizer" data-col="thread" aria-hidden="true"></span>
+          </div>
+          <div class="col col-source" data-col="source" role="columnheader">
+            <span class="col-label">Source</span>
+            <!-- no resizer on the last column -->
+          </div>
+        </div>
+        <div id="grid-body">
+          <div id="grid-sizer" aria-hidden="true"></div>
+          <div id="grid-rows" role="rowgroup"></div>
+        </div>
+      </div>
+
+      <!-- Severity heat-strip over the grid's right edge; minimap.js fills it. -->
+      <div id="minimap" aria-hidden="true"></div>
+
+      <!-- Detail pane: shows the full content of the clicked log line -->
+      <section id="detail-pane" aria-label="Selected entry detail" hidden>
+        <div id="detail-pane-resizer" role="separator" aria-orientation="horizontal" aria-label="Resize detail pane" tabindex="0"></div>
+        <header id="detail-pane-head">
+          <span id="detail-pane-title" class="detail-pane-title">Entry detail</span>
+          <span class="detail-pane-spacer" aria-hidden="true"></span>
+          <button type="button" id="detail-pane-expand" class="detail-pane-btn" title="Open full detail (double-click a row)" aria-label="Open full detail dialog">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button type="button" id="detail-pane-close" class="detail-pane-btn" title="Close detail pane" aria-label="Close detail pane">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+        </header>
+        <div id="detail-pane-content" class="detail-body"></div>
+      </section>
+
+      <!-- Empty state shown when no data is loaded -->
+      <section id="empty-state" aria-label="No log loaded">
+        <div class="empty-card">
+          <svg class="empty-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+            <path d="M14 3v5h5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+            <line x1="8.5" y1="13" x2="15.5" y2="13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            <line x1="8.5" y1="16.5" x2="13" y2="16.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          <h1 class="empty-title">Drop log files here</h1>
+          <p class="empty-sub">Open one or more <code>.log</code> files — CMTrace, SCCM/ConfigMgr, or plain text. Everything is parsed locally in your browser; nothing is uploaded.</p>
+          <div class="empty-actions">
+            <button type="button" id="empty-open" class="btn btn-primary">Open files…</button>
+            <button type="button" id="empty-sample" class="btn">Load sample log</button>
+            <button type="button" id="empty-clipboard" class="btn">Paste from clipboard</button>
+          </div>
+          <p class="empty-hint">Tip: press <kbd>Ctrl</kbd>+<kbd>K</kbd> for the command palette.</p>
+        </div>
+      </section>
+
+      <!-- Drag-and-drop overlay -->
+      <div id="drop-zone" aria-hidden="true">
+        <div class="drop-inner">
+          <svg class="drop-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 16V4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M7 9l5-5 5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 16v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <span class="drop-text">Release to open log files</span>
+        </div>
+      </div>
+
+      <!-- Compare overlay: git-style diff of two open log files -->
+      <section id="compare" aria-label="Compare two logs" hidden data-mode="side">
+        <header id="compare-head">
+          <span class="cmp-title">Compare</span>
+          <select id="cmp-left" class="cmp-select" aria-label="Left file"></select>
+          <button type="button" id="cmp-swap" class="cmp-btn" title="Swap sides" aria-label="Swap sides">⇄</button>
+          <select id="cmp-right" class="cmp-select" aria-label="Right file"></select>
+          <label class="cmp-toggle" title="Ignore timestamps, threads, numbers, hex and paths so only real content differences show">
+            <input type="checkbox" id="cmp-ignore" checked /> Ignore noise
+          </label>
+          <button type="button" id="cmp-mode" class="cmp-btn cmp-mode" aria-pressed="false" title="Toggle side-by-side / unified">Side-by-side</button>
+          <span id="cmp-stats" class="cmp-stats" aria-live="polite"></span>
+          <span class="cmp-head-spacer" aria-hidden="true"></span>
+          <button type="button" id="cmp-close" class="cmp-btn" title="Close compare (Esc)" aria-label="Close compare">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+        </header>
+        <div id="cmp-colhead" aria-hidden="true">
+          <span class="cmp-colhead-l">Left</span>
+          <span class="cmp-colhead-r">Right</span>
+        </div>
+        <div id="cmp-body">
+          <div id="cmp-sizer" aria-hidden="true"></div>
+          <div id="cmp-rows" role="list"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ============================ FIND BAR ============================ -->
+    <div id="findbar" role="search" aria-label="Find in view" hidden>
+      <svg class="icon find-glyph" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="11" cy="11" r="6" fill="none" stroke="currentColor" stroke-width="1.7"/>
+        <line x1="16" y1="16" x2="21" y2="21" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      </svg>
+      <input type="search" id="find-input" placeholder="Find in view…" aria-label="Find text" autocomplete="off" spellcheck="false" />
+      <span id="find-count" class="find-count" aria-live="polite">0/0</span>
+      <button type="button" id="find-prev" class="find-btn" title="Previous match (Shift+F3)" aria-label="Previous match">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 14l5-5 5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button type="button" id="find-next" class="find-btn" title="Next match (F3)" aria-label="Next match">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button type="button" id="find-case" class="find-btn find-toggle" title="Match case" aria-label="Match case" aria-pressed="false">Aa</button>
+      <button type="button" id="find-regex" class="find-btn find-toggle" title="Use regular expression" aria-label="Use regular expression" aria-pressed="false">.*</button>
+      <button type="button" id="find-close" class="find-btn" title="Close find bar (Esc)" aria-label="Close find bar">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <!-- ============================ STATUS BAR ============================ -->
+    <footer id="statusbar" role="status" aria-label="Status bar">
+      <span id="status-counts" class="status-item">No data</span>
+      <span id="status-selection" class="status-item"></span>
+      <span class="status-spacer" aria-hidden="true"></span>
+      <span id="status-range" class="status-item"></span>
+      <span id="status-format" class="status-item"></span>
+      <span id="status-tail" class="status-item"></span>
+      <span id="status-progress" class="status-item" aria-live="polite"></span>
+    </footer>
+
+  </div><!-- /#app -->
+
+  <!-- ============================ MODALS ============================ -->
+
+  <!-- Filter modal -->
+  <div class="modal-backdrop" id="modal-filter" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-filter-title">
+      <header class="modal-head">
+        <h2 id="modal-filter-title" class="modal-title">Filter</h2>
+        <button type="button" class="modal-close" title="Close" aria-label="Close filter dialog">&times;</button>
+      </header>
+      <div class="modal-body">
+        <div class="field">
+          <label for="filter-text">Text</label>
+          <div class="field-row">
+            <input type="text" id="filter-text" placeholder="Filter text…" autocomplete="off" spellcheck="false" />
+            <select id="filter-mode" aria-label="Match mode">
+              <option value="contains">Contains</option>
+              <option value="notcontains">Does not contain</option>
+              <option value="regex">Regex</option>
+            </select>
+          </div>
+          <label class="check"><input type="checkbox" id="filter-case" /> Case sensitive</label>
+        </div>
+
+        <fieldset class="field">
+          <legend>Severity</legend>
+          <label class="check"><input type="checkbox" id="filter-type-1" checked /> <span class="dot dot-info" aria-hidden="true"></span> Info</label>
+          <label class="check"><input type="checkbox" id="filter-type-2" checked /> <span class="dot dot-warn" aria-hidden="true"></span> Warning</label>
+          <label class="check"><input type="checkbox" id="filter-type-3" checked /> <span class="dot dot-error" aria-hidden="true"></span> Error</label>
+        </fieldset>
+
+        <div class="field two-col">
+          <div>
+            <label>Components</label>
+            <div id="filter-components" class="check-list" aria-label="Component filters"></div>
+          </div>
+          <div>
+            <label>Threads</label>
+            <div id="filter-threads" class="check-list" aria-label="Thread filters"></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Time range (local)</label>
+          <div class="field-row">
+            <input type="datetime-local" id="filter-time-from" step="1" aria-label="From time" />
+            <span class="field-dash" aria-hidden="true">→</span>
+            <input type="datetime-local" id="filter-time-to" step="1" aria-label="To time" />
+          </div>
+        </div>
+      </div>
+      <footer class="modal-foot">
+        <button type="button" id="filter-reset" class="btn">Reset</button>
+        <button type="button" id="filter-apply" class="btn btn-primary">Apply filter</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Highlight modal -->
+  <div class="modal-backdrop" id="modal-highlight" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-highlight-title">
+      <header class="modal-head">
+        <h2 id="modal-highlight-title" class="modal-title">Highlight rules</h2>
+        <button type="button" class="modal-close" title="Close" aria-label="Close highlight dialog">&times;</button>
+      </header>
+      <div class="modal-body">
+        <div class="field">
+          <label for="hl-term">Add a rule</label>
+          <div class="field-row">
+            <input type="text" id="hl-term" placeholder="Term to highlight…" autocomplete="off" spellcheck="false" />
+            <input type="color" id="hl-color" value="#ffd54f" aria-label="Highlight color" />
+            <button type="button" id="hl-add" class="btn btn-primary">Add</button>
+          </div>
+          <div class="field-row">
+            <label class="check"><input type="checkbox" id="hl-case" /> Case sensitive</label>
+            <label class="check"><input type="checkbox" id="hl-regex" /> Regex</label>
+          </div>
+        </div>
+        <div id="hl-list" class="rule-list" aria-label="Highlight rules list"></div>
+      </div>
+      <footer class="modal-foot">
+        <button type="button" class="btn modal-close">Close</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Error lookup modal -->
+  <div class="modal-backdrop" id="modal-errorlookup" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-errorlookup-title">
+      <header class="modal-head">
+        <h2 id="modal-errorlookup-title" class="modal-title">Error code lookup</h2>
+        <button type="button" class="modal-close" title="Close" aria-label="Close error lookup dialog">&times;</button>
+      </header>
+      <div class="modal-body">
+        <div class="field">
+          <label for="err-input">Error code</label>
+          <div class="field-row">
+            <input type="text" id="err-input" placeholder="e.g. 0x80004005, -2147467259, 5" autocomplete="off" spellcheck="false" />
+            <button type="button" id="err-go" class="btn btn-primary">Look up</button>
+          </div>
+        </div>
+        <div id="err-result" class="result-box" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Go to line modal -->
+  <div class="modal-backdrop" id="modal-goto" hidden>
+    <div class="modal modal-sm" role="dialog" aria-modal="true" aria-labelledby="modal-goto-title">
+      <header class="modal-head">
+        <h2 id="modal-goto-title" class="modal-title">Go to line</h2>
+        <button type="button" class="modal-close" title="Close" aria-label="Close go-to dialog">&times;</button>
+      </header>
+      <div class="modal-body">
+        <div class="field">
+          <label for="goto-input">Line number (in current view)</label>
+          <div class="field-row">
+            <input type="number" id="goto-input" min="1" placeholder="Line #" />
+            <button type="button" id="goto-go" class="btn btn-primary">Go</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail modal -->
+  <div class="modal-backdrop" id="modal-detail" hidden>
+    <div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="modal-detail-title">
+      <header class="modal-head">
+        <h2 id="modal-detail-title" class="modal-title">Entry detail</h2>
+        <div class="modal-head-actions">
+          <button type="button" id="detail-prev" class="btn btn-icon" title="Previous entry" aria-label="Previous entry">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 14l5-5 5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button type="button" id="detail-next" class="btn btn-icon" title="Next entry" aria-label="Next entry">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button type="button" id="detail-copy" class="btn btn-icon" title="Copy raw entry" aria-label="Copy raw entry">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <rect x="9" y="9" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/>
+              <path d="M5 15V6a2 2 0 0 1 2-2h9" fill="none" stroke="currentColor" stroke-width="1.7"/>
+            </svg>
+          </button>
+          <button type="button" class="modal-close" title="Close" aria-label="Close detail dialog">&times;</button>
+        </div>
+      </header>
+      <div class="modal-body">
+        <div id="detail-content" class="detail-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics modal -->
+  <div class="modal-backdrop" id="modal-stats" hidden>
+    <div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="modal-stats-title">
+      <header class="modal-head">
+        <h2 id="modal-stats-title" class="modal-title">Statistics</h2>
+        <button type="button" class="modal-close" title="Close" aria-label="Close statistics dialog">&times;</button>
+      </header>
+      <div class="modal-body">
+        <div id="stats-content" class="stats-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings modal -->
+  <div class="modal-backdrop" id="modal-settings" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-settings-title">
+      <header class="modal-head">
+        <h2 id="modal-settings-title" class="modal-title">Settings</h2>
+        <button type="button" class="modal-close" title="Close" aria-label="Close settings dialog">&times;</button>
+      </header>
+      <div class="modal-body">
+        <div class="field">
+          <label for="set-theme">Theme</label>
+          <select id="set-theme">
+            <option value="auto">Auto (system)</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="set-fontsize">Font size <span class="field-suffix">(px)</span></label>
+          <input type="range" id="set-fontsize" min="10" max="20" step="1" value="13" />
+        </div>
+        <div class="field">
+          <label for="set-rowheight">Row height <span class="field-suffix">(px)</span></label>
+          <input type="range" id="set-rowheight" min="18" max="40" step="1" value="24" />
+        </div>
+        <div class="field">
+          <label class="check"><input type="checkbox" id="set-wrap" /> Wrap log text in detail view</label>
+        </div>
+        <div class="field">
+          <label for="set-dateformat">Date format</label>
+          <select id="set-dateformat">
+            <option value="YYYY-MM-DD">YYYY-MM-DD (ISO)</option>
+            <option value="DD-MM-YYYY">DD-MM-YYYY (European)</option>
+            <option value="MM-DD-YYYY">MM-DD-YYYY (US)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- About modal -->
+  <div class="modal-backdrop" id="modal-about" hidden>
+    <div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="modal-about-title">
+      <header class="modal-head">
+        <h2 id="modal-about-title" class="modal-title">About CMTrace Web</h2>
+        <button type="button" class="modal-close" title="Close" aria-label="Close about dialog">&times;</button>
+      </header>
+      <div class="modal-body">
+        <p class="about-lead">
+          <strong>CMTrace Web</strong> is a fast, modern, 100% client-side reimplementation of the classic
+          CMTrace log viewer for SCCM / ConfigMgr logs. It runs entirely in your browser — no server, no
+          uploads — and works directly from a local <code>file://</code> path or any static host.
+        </p>
+
+        <h3 class="about-h">Features</h3>
+        <ul class="about-list">
+          <li>Reads CMTrace, legacy SCCM/ConfigMgr and plain-text log formats.</li>
+          <li>Virtual scrolling for smooth viewing of 100k–1M+ lines.</li>
+          <li>Live filtering by text, severity, component, thread and time range.</li>
+          <li>Find with regex &amp; case options, plus persistent highlight rules.</li>
+          <li>Built-in Win32 / HRESULT error-code lookup.</li>
+          <li>Merge multiple logs, live tail (follow), and export to log/CSV.</li>
+          <li>Light &amp; dark themes, command palette, keyboard-first workflow.</li>
+        </ul>
+
+        <h3 class="about-h">Keyboard shortcuts</h3>
+        <table class="shortcut-table">
+          <thead><tr><th>Action</th><th>Shortcut</th></tr></thead>
+          <tbody>
+            <tr><td>Open files</td><td><kbd>Ctrl</kbd>+<kbd>O</kbd></td></tr>
+            <tr><td>Find</td><td><kbd>Ctrl</kbd>+<kbd>F</kbd></td></tr>
+            <tr><td>Find next / previous</td><td><kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd></td></tr>
+            <tr><td>Filter</td><td><kbd>Ctrl</kbd>+<kbd>R</kbd></td></tr>
+            <tr><td>Highlight rules</td><td><kbd>Ctrl</kbd>+<kbd>H</kbd></td></tr>
+            <tr><td>Go to line</td><td><kbd>Ctrl</kbd>+<kbd>G</kbd></td></tr>
+            <tr><td>Error code lookup</td><td><kbd>Ctrl</kbd>+<kbd>E</kbd></td></tr>
+            <tr><td>Command palette</td><td><kbd>Ctrl</kbd>+<kbd>K</kbd></td></tr>
+            <tr><td>Clear all</td><td><kbd>Ctrl</kbd>+<kbd>L</kbd> / <kbd>Shift</kbd>+<kbd>Del</kbd></td></tr>
+            <tr><td>Toggle live tail</td><td><kbd>Ctrl</kbd>+<kbd>End</kbd></td></tr>
+            <tr><td>Close dialog / find bar</td><td><kbd>Esc</kbd></td></tr>
+          </tbody>
+        </table>
+
+        <p class="about-note">
+          CMTrace Web is an independent, open reimplementation built for convenience. It is
+          <strong>not affiliated with, endorsed by, or sponsored by Microsoft</strong>. CMTrace,
+          Configuration Manager and SCCM are trademarks of Microsoft Corporation.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================ COMMAND PALETTE ============================ -->
+  <div id="palette" role="dialog" aria-modal="true" aria-label="Command palette" hidden>
+    <div class="palette-box">
+      <input type="text" id="palette-input" placeholder="Type a command…" autocomplete="off" spellcheck="false" aria-label="Command search" />
+      <ul id="palette-list" class="palette-list" role="listbox" aria-label="Commands"></ul>
+    </div>
+  </div>
+
+  <!-- ============================ PROGRESS OVERLAY ============================ -->
+  <div id="progress" hidden role="progressbar" aria-label="Loading progress" aria-valuemin="0" aria-valuemax="100">
+    <div class="progress-card">
+      <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
+      <div id="progress-text" class="progress-text">Loading…</div>
+    </div>
+  </div>
+
+  <!-- ============================ TOASTS ============================ -->
+  <div id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- ============================ SCRIPTS (contract load order) ============================ -->
+  <script src="data/errorcodes.js"></script>
+  <script src="data/errorkb.js"></script>
+  <script src="data/sample.js"></script>
+  <script src="js/util.js"></script>
+  <script src="js/parser.js"></script>
+  <script src="js/errorlookup.js"></script>
+  <script src="js/filter.js"></script>
+  <script src="js/search.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/grid.js"></script>
+  <script src="js/files.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/decompress.js"></script>
+  <script src="js/insights.js"></script>
+  <script src="js/minimap.js"></script>
+  <script src="js/presets.js"></script>
+  <script src="js/compare.js"></script>
+  <script src="js/handoff.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
