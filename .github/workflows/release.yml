@@ -34,6 +34,11 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  # Opt into Node.js 24 ahead of the 2026-06-16 default flip so the bundled
+  # JavaScript actions (actions/checkout, docker/*-action, etc.) stop emitting
+  # the Node 20 deprecation warning. See:
+  # https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build-and-push:
