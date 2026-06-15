@@ -1,0 +1,85 @@
+name: Auto-Tag
+
+# Read the VERSION file at the root of the repo and push an annotated
+# `v<version>` tag whenever it changes (and the tag doesn't already exist).
+# Pushing the tag fires .github/workflows/release.yml, which builds the
+# multi-arch Docker image, cross-compiles the six standalone binaries
+# and publishes the GitHub Release.
+#
+# To cut a release: bump VERSION (e.g. 0.1.0 -> 0.2.0), commit, merge to
+# main. That's it.
+#
+# `workflow_dispatch` is provided for ad-hoc re-tagging at the current
+# main HEAD without changing VERSION (e.g. after a hot-fix that doesn't
+# bump the version).
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - VERSION
+  workflow_dispatch:
+
+concurrency:
+  group: auto-tag-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create v<VERSION> tag if missing
+        run: |
+          set -euo pipefail
+          if [ ! -f VERSION ]; then
+            echo "::error::VERSION file is missing"; exit 1
+          fi
+          ver="$(tr -d '[:space:]' < VERSION)"
+          if [ -z "${ver}" ]; then
+            echo "::error::VERSION file is empty"; exit 1
+          fi
+          tag="v${ver}"
+          echo "VERSION='${ver}' -> tag='${tag}'"
+
+          if git rev-parse --verify "refs/tags/${tag}" >/dev/null 2>&1; then
+            echo "Tag ${tag} already exists locally; nothing to do."
+            exit 0
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; then
+            echo "Tag ${tag} already exists on origin; nothing to do."
+            exit 0
+          fi
+
+          git config user.name  'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag -a "${tag}" -m "Release ${tag}"
+          git push origin "${tag}"
+          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
+        id: tag
+
+      - name: Trigger release.yml on the new tag
+        if: steps.tag.outputs.tag != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # GITHUB_TOKEN-pushed tag events are deliberately skipped by
+          # GitHub Actions to prevent recursive workflow loops, so the
+          # push above will NOT fire .github/workflows/release.yml on
+          # its own. workflow_dispatch is the documented exception, so
+          # we kick release.yml explicitly against the new tag ref.
+          # See: https://docs.github.com/en/actions/security-guides/automatic-token-authentication#using-the-github_token-in-a-workflow
+          tag='${{ steps.tag.outputs.tag }}'
+          echo "Dispatching release.yml against ref ${tag}"
+          gh workflow run release.yml --ref "${tag}"
