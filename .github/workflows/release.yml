@@ -185,6 +185,11 @@ jobs:
       - name: Download all binary artifacts
         uses: actions/download-artifact@v4
         with:
+          # Only the cross-compiled binaries — exclude the auto-uploaded
+          # *.dockerbuild buildkit metadata artifact from build-and-push,
+          # which periodically times out on the Azure blob backend and
+          # has no place in the release anyway.
+          pattern: cmtrace-*
           path: dist
           merge-multiple: true
 
