@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="CMTrace.dev">
+  <!-- CMTrace.dev brand favicon (msnugget look) -->
+  <!-- Rounded green brand tile -->
+  <rect x="1" y="1" width="30" height="30" rx="8" ry="8" fill="#39A751"/>
+  <rect x="1" y="1" width="30" height="30" rx="8" ry="8" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+  <!-- Three white rounded log lines -->
+  <g stroke="#ffffff" stroke-width="2.6" stroke-linecap="round">
+    <line x1="8" y1="11" x2="20" y2="11" opacity="0.96"/>
+    <line x1="8" y1="16" x2="23" y2="16" opacity="0.96"/>
+    <line x1="8" y1="21" x2="16.5" y2="21" opacity="0.8"/>
+  </g>
+  <!-- The bright nugget / status dot -->
+  <circle cx="23" cy="21" r="3.1" fill="#39A751"/>
+  <circle cx="23" cy="21" r="2.1" fill="#d9ffe2"/>
+</svg>
